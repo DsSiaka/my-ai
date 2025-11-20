@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Ds Siaka",
+  "description": "Aide aux devoirs IA créée par Siaka Keita de la 11ème SES, LYCÉE la Lanterne.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
