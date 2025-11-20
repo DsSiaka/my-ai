@@ -221,14 +221,17 @@ const App: React.FC = () => {
           );
         }
       );
-    } catch (error) {
+    } catch (error: any) {
+      // Display the ACTUAL error message from the service
+      const errorMessage = error?.message || "Une erreur inconnue est survenue.";
+      
       setSessions(prev => 
         prev.map((session) => {
           if (session.id === activeSession.id) {
             return {
               ...session,
               messages: session.messages.map(msg => 
-                msg.id === botMsgId ? { ...msg, text: "Désolé, j'ai rencontré une erreur. Veuillez vérifier votre connexion.", isError: true } : msg
+                msg.id === botMsgId ? { ...msg, text: errorMessage, isError: true } : msg
               )
             };
           }
