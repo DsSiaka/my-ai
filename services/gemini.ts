@@ -1,12 +1,12 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, Role, Subject } from "../types";
 import { SUBJECT_CONFIGS } from "../constants";
 
 // Initialize the client safely. 
-// If process is not defined (browser default), use empty string to avoid crash, 
-// then validate in the function.
-const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+// Using the provided key as fallback if env var is missing
+const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
+  ? process.env.API_KEY 
+  : 'AIzaSyAcsqMGL0eOKuzGTy7wqNTdo5BO7Iqtz3Y';
 
 export const sendMessageToGemini = async (
   history: Message[],
@@ -17,32 +17,25 @@ export const sendMessageToGemini = async (
 ): Promise<string> => {
   
   if (!apiKey) {
-    throw new Error("ERREUR CONFIGURATION : Clé API manquante. Vous devez ajouter API_KEY dans vos variables d'environnement.");
+    throw new Error("CLÉ API MANQUANTE : Veuillez vérifier la configuration de l'application.");
   }
 
-  // We create the instance inside the function or check if it exists to ensure we don't crash on load if key is missing
   const ai = new GoogleGenAI({ apiKey });
 
   // Select model based on task complexity
   let modelName = 'gemini-2.5-flash';
-  let thinkingBudget = 0;
-
-  if (subject === Subject.MATH || subject === Subject.SCIENCE || subject === Subject.CODING) {
-     modelName = 'gemini-3-pro-preview'; 
-     thinkingBudget = 1024 * 4; // Moderate thinking
-  }
 
   // System instructions setup
   const systemInstruction = SUBJECT_CONFIGS[subject].systemPrompt;
 
   try {
-    // Prepare content parts
-    const contents = history.map(msg => ({
+    // Prepare content parts for history
+    const historyContent = history.map(msg => ({
       role: msg.role === Role.USER ? 'user' : 'model',
       parts: [
         ...((msg.images || []).map(img => ({
           inlineData: {
-            mimeType: 'image/jpeg', // Assuming JPEG for simplicity in this demo
+            mimeType: 'image/jpeg',
             data: img
           }
         }))),
@@ -50,7 +43,16 @@ export const sendMessageToGemini = async (
       ]
     }));
 
-    // Add the new message
+    // Create chat instance
+    const chat = ai.chats.create({
+      model: modelName,
+      history: historyContent,
+      config: {
+        systemInstruction: systemInstruction,
+      }
+    });
+
+    // Prepare current message parts
     const currentParts: any[] = [{ text: newMessage }];
     if (images && images.length > 0) {
       images.forEach(img => {
@@ -63,15 +65,7 @@ export const sendMessageToGemini = async (
       });
     }
 
-    const chat = ai.chats.create({
-      model: modelName,
-      history: contents,
-      config: {
-        systemInstruction: systemInstruction,
-        thinkingConfig: thinkingBudget > 0 ? { thinkingBudget } : undefined,
-      }
-    });
-
+    // Send message stream
     const resultStream = await chat.sendMessageStream({
       message: currentParts
     });
@@ -90,7 +84,17 @@ export const sendMessageToGemini = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    // Pass the actual error message back to the UI
-    throw new Error(error.message || "Échec de la génération de la réponse.");
+    
+    let errorMessage = "Échec de la connexion à l'IA.";
+    
+    if (error.message?.includes('API_KEY') || error.message?.includes('400')) {
+      errorMessage = "Erreur de configuration (Clé API).";
+    } else if (error.message?.includes('429')) {
+      errorMessage = "Trop de requêtes. Veuillez patienter un instant.";
+    } else if (error.message) {
+       errorMessage = `Erreur: ${error.message}`;
+    }
+
+    throw new Error(errorMessage);
   }
 };
