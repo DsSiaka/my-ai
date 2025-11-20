@@ -4,9 +4,13 @@ import { SUBJECT_CONFIGS } from "../constants";
 
 // Initialize the client safely. 
 // Using the provided key as fallback if env var is missing
-const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
-  ? process.env.API_KEY 
-  : 'AIzaSyAcsqMGL0eOKuzGTy7wqNTdo5BO7Iqtz3Y';
+const getApiKey = () => {
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // Fallback key provided by user
+  return 'AIzaSyAcsqMGL0eOKuzGTy7wqNTdo5BO7Iqtz3Y';
+};
 
 export const sendMessageToGemini = async (
   history: Message[],
@@ -16,6 +20,8 @@ export const sendMessageToGemini = async (
   onStream: (text: string) => void
 ): Promise<string> => {
   
+  const apiKey = getApiKey();
+
   if (!apiKey) {
     throw new Error("CLÉ API MANQUANTE : Veuillez vérifier la configuration de l'application.");
   }
