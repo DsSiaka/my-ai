@@ -1,12 +1,12 @@
+
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, Role, Subject } from "../types";
 import { SUBJECT_CONFIGS } from "../constants";
 
-// Initialize the client.
-// In a real app, ensure process.env.API_KEY is available. 
-// Since we cannot ask the user for input, we assume it is injected.
-const apiKey = process.env.API_KEY || ''; 
-const ai = new GoogleGenAI({ apiKey });
+// Initialize the client safely. 
+// If process is not defined (browser default), use empty string to avoid crash, 
+// then validate in the function.
+const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
 
 export const sendMessageToGemini = async (
   history: Message[],
@@ -17,25 +17,18 @@ export const sendMessageToGemini = async (
 ): Promise<string> => {
   
   if (!apiKey) {
-    throw new Error("Clé API manquante. Si vous êtes le propriétaire, ajoutez 'API_KEY' dans les variables d'environnement de votre hébergeur (Vercel, Netlify, etc.).");
+    throw new Error("ERREUR CONFIGURATION : Clé API manquante. Vous devez ajouter API_KEY dans vos variables d'environnement.");
   }
 
+  // We create the instance inside the function or check if it exists to ensure we don't crash on load if key is missing
+  const ai = new GoogleGenAI({ apiKey });
+
   // Select model based on task complexity
-  // Math and Science benefit from "thinking" models (Gemini 2.5 series with thinking config)
-  // or Gemini 3 Pro for reasoning.
-  // Per guidelines: Complex Text Tasks (advanced reasoning, coding, math) -> 'gemini-3-pro-preview'
-  // Basic Text -> 'gemini-2.5-flash'
-  
   let modelName = 'gemini-2.5-flash';
   let thinkingBudget = 0;
 
   if (subject === Subject.MATH || subject === Subject.SCIENCE || subject === Subject.CODING) {
-     // Use Pro for heavy reasoning
      modelName = 'gemini-3-pro-preview'; 
-     // Add thinking budget for 2.5 series if we were using it, but for 3-pro-preview we can also use it.
-     // Let's stick to the guidelines. Guideline says:
-     // "The maximum thinking budget for 2.5 Pro is 32768... gemini-3-pro-preview contents..."
-     // Let's try to use a thinking budget to make it smarter for Math.
      thinkingBudget = 1024 * 4; // Moderate thinking
   }
 
@@ -70,13 +63,6 @@ export const sendMessageToGemini = async (
       });
     }
 
-    // We'll use a fresh chat session style call or just generateContent with history.
-    // Given we want to stream, and maintain history manually for the UI state,
-    // passing the full history to generateContentStream is often stateless and easier to manage 
-    // if we aren't using the persistent Chat object (which holds its own history).
-    // However, standard practice with the SDK is often `ai.chats.create`.
-    // Let's use `ai.chats.create` but populate history.
-    
     const chat = ai.chats.create({
       model: modelName,
       history: contents,
@@ -87,10 +73,7 @@ export const sendMessageToGemini = async (
     });
 
     const resultStream = await chat.sendMessageStream({
-      message: {
-        role: 'user',
-        parts: currentParts
-      }
+      message: currentParts
     });
 
     let fullText = '';
@@ -107,6 +90,7 @@ export const sendMessageToGemini = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
+    // Pass the actual error message back to the UI
     throw new Error(error.message || "Échec de la génération de la réponse.");
   }
 };
