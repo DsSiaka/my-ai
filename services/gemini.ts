@@ -139,12 +139,21 @@ export const sendMessageToGemini = async (
     // Fallback to mock response when API fails
     console.warn("API error occurred, falling back to mock response");
     
+    // Check if it's specifically an API key issue
+    let errorMessage = "Désolé, je rencontre actuellement des difficultés techniques. Je suis votre assistant Ds Siaka pour les devoirs. Posez-moi une question et je ferai de mon mieux pour vous aider.";
+    
+    if (error.message && error.message.includes("leaked")) {
+      errorMessage = "Désolé, la clé API utilisée a été signalée comme compromise. Veuillez configurer une nouvelle clé API dans les variables d'environnement pour obtenir des réponses réelles de l'IA. L'application continue de fonctionner avec des réponses simulées.";
+    } else if (error.message && error.message.includes("PERMISSION_DENIED")) {
+      errorMessage = "Désolé, il y a un problème d'autorisation avec la clé API. Veuillez vérifier votre clé API dans les variables d'environnement. L'application continue de fonctionner avec des réponses simulées.";
+    }
+    
     const mockResponses = {
-      [Subject.GENERAL]: "Désolé, je rencontre actuellement des difficultés techniques. Je suis votre assistant Ds Siaka pour les devoirs. Posez-moi une question et je ferai de mon mieux pour vous aider.",
-      [Subject.MATH]: "Désolé pour l'inconvénient. Je suis spécialisé en mathématiques. Veuillez me poser votre question de mathématiques et je vous fournirai une explication détaillée.",
-      [Subject.SCIENCE]: "Je rencontre des problèmes techniques. En sciences, je peux vous aider en physique, chimie ou biologie. Quelle est votre question?",
-      [Subject.HISTORY]: "Désolé, je ne peux pas accéder à mes connaissances en histoire pour le moment. Qu'aimeriez-vous savoir?",
-      [Subject.CODING]: "Je rencontre des difficultés techniques. Pour la programmation, je peux vous aider dans plusieurs langages. Quel est votre problème de code?"
+      [Subject.GENERAL]: errorMessage,
+      [Subject.MATH]: errorMessage.replace("Ds Siaka pour les devoirs", "spécialisé en mathématiques"),
+      [Subject.SCIENCE]: errorMessage.replace("Ds Siaka pour les devoirs", "spécialisé en sciences"),
+      [Subject.HISTORY]: errorMessage.replace("Ds Siaka pour les devoirs", "spécialisé en histoire"),
+      [Subject.CODING]: errorMessage.replace("Ds Siaka pour les devoirs", "spécialisé en programmation")
     };
     
     const mockResponse = mockResponses[subject] || mockResponses[Subject.GENERAL];
