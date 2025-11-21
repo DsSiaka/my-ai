@@ -1,10 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import 'katex/dist/katex.min.css';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 interface MarkdownRendererProps {
   content: string;
@@ -12,7 +11,7 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   return (
-    <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert">
+    <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert break-words overflow-y-auto h-full p-6">
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
@@ -29,11 +28,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
                 {String(children).replace(/\n$/, '')}
               </SyntaxHighlighter>
             ) : (
-              <code className={`${className} bg-slate-200 text-slate-800 rounded px-1 py-0.5`} {...props}>
+              <code className={`${className} bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded px-1 py-0.5`} {...props}>
                 {children}
               </code>
             );
-          }
+          },
+          // Custom rendering for math elements
+          p: ({ node, children, ...props }) => (
+            <p className="mb-2 last:mb-0" {...props}>
+              {children}
+            </p>
+          ),
         }}
       >
         {content}
