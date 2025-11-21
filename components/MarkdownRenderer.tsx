@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
@@ -11,7 +12,7 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   return (
-    <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert break-words">
+    <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
@@ -32,9 +33,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
                 {children}
               </code>
             );
-          },
-          // Custom rendering for math elements to ensure they overflow correctly
-          p: ({node, children, ...props}) => <p className="mb-2 last:mb-0" {...props}>{children}</p>,
+          }
         }}
       >
         {content}
