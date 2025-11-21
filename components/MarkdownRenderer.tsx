@@ -2,19 +2,36 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+
+// Conditional imports for math support
+let remarkMath: any = null;
+let rehypeKatex: any = null;
+try {
+  remarkMath = require('remark-math');
+} catch (e) {
+  console.warn('remark-math not available, math rendering will be disabled');
+}
+
+try {
+  rehypeKatex = require('rehype-katex');
+} catch (e) {
+  console.warn('rehype-katex not available, math rendering will be disabled');
+}
 
 interface MarkdownRendererProps {
   content: string;
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+  // Only use math plugins if they're available
+  const remarkPlugins = remarkMath ? [remarkMath] : [];
+  const rehypePlugins = rehypeKatex ? [rehypeKatex] : [];
+
   return (
     <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert break-words overflow-y-auto h-full p-6">
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         components={{
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
