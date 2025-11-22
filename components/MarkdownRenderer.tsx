@@ -31,7 +31,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
               </code>
             );
           },
-          // Custom rendering for paragraphs
           p: ({ node, children, ...props }) => (
             <p className="mb-2 last:mb-0" {...props}>
               {children}
