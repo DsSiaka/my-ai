@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -11,6 +12,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
   return (
     <div className="prose prose-sm md:prose-base prose-slate max-w-none dark:prose-invert break-words overflow-y-auto h-full p-6">
       <ReactMarkdown
+        remarkPlugins={[remarkMath]}
         components={{
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
